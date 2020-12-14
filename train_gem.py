@@ -98,11 +98,10 @@ if __name__=="__main__":
     model = model.to(device)
     print(model)
 
-
     ### Dataset
     train_transforms = torch.nn.Sequential(
         transforms.ColorJitter(brightness=0.1, contrast=0.2, saturation=0.2, hue=0.1),
-        transforms.GaussianBlur(3, sigma=(0.1, 2.0)),
+        transforms.RandomApply(torch.nn.ModuleList([transforms.GaussianBlur(3, sigma=(0.1, 2.0))]), p=0.5),
         transforms.RandomAffine(180, translate=(0.2, 0.2), scale=(0.8, 1.2), shear=0.2),
         transforms.RandomHorizontalFlip(p=0.5)
     )
@@ -112,14 +111,15 @@ if __name__=="__main__":
 
     ### Optimizer
     optimizer = optim.Adam(model.parameters(), lr=0.0002)
+    # optimizer = optim.SGD(lr=1e-3, momentum=0.9, nesterov=True)
 
 
     ### Train
     since = time.time()
     criterion = nn.SmoothL1Loss()
-    num_epochs = 150
+    num_epochs = 15
     for epoch in range(1, num_epochs+1):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
         model.train()
         running_loss = 0.0
@@ -135,6 +135,7 @@ if __name__=="__main__":
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
                 loss.backward()
+                optimizer.step()
             running_loss += loss.item() * inputs.size(0)
             counter += 1
             tk0.set_postfix(loss=(running_loss / (counter * data_loader.batch_size)))
