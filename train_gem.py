@@ -157,7 +157,7 @@ if __name__=="__main__":
     ### Optimizer
     # optimizer = optim.Adam(model.parameters(), lr=0.0002)
     optimizer = optim.SGD(model.parameters(), lr=5e-3, momentum=0.9, weight_decay=1e-5)
-    stepLR = optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.2)
+    stepLR = optim.lr_scheduler.StepLR(optimizer, 2, gamma=0.4)
 
     ### Train
     since = time.time()
