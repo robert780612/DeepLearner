@@ -132,7 +132,7 @@ if __name__=="__main__":
     # model.avg_pool = GeM()
     # model.last_linear = nn.Linear(2048, 1)
 
-    model = get_se_resnet50_gem(pretrain=None)#'imagenet')
+    model = get_se_resnet50_gem(pretrain='imagenet')
     model = model.to(device)
     print(model)
     if os.path.isfile(LOAD_MODEL):
@@ -156,8 +156,8 @@ if __name__=="__main__":
 
     ### Optimizer
     # optimizer = optim.Adam(model.parameters(), lr=0.0002)
-    optimizer = optim.SGD(model.parameters(), lr=5e-3, momentum=0.9, weight_decay=1e-5)
-    stepLR = optim.lr_scheduler.StepLR(optimizer, 2, gamma=0.4)
+    optimizer = optim.SGD(model.parameters(), lr=2e-4, momentum=0.9, weight_decay=1e-6)
+    stepLR = optim.lr_scheduler.StepLR(optimizer, 2, gamma=0.9)
 
     ### Train
     since = time.time()
