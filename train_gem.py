@@ -3,6 +3,7 @@ import time
 import random
 import json
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -16,14 +17,17 @@ from torch.optim import lr_scheduler
 from torchvision import transforms
 from tqdm import tqdm
 from PIL import Image, ImageFile
+from sklearn.metrics import confusion_matrix
 
 import pretrainedmodels
 import torchvision.transforms.functional as TF
 from models import get_se_resnet50_gem
 
 TRAIN_IMAGE_PATH = './train_images'
-WORK_DIR = 'work_dir/448'
+WORK_DIR = 'work_dir/224'
 LOAD_MODEL = os.path.join(WORK_DIR,'latest.pth')
+img_size = 224
+padding = 10
 
 device = torch.device("cuda")
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -42,7 +46,7 @@ class RetinopathyDatasetTrain(Dataset):
     def __getitem__(self, idx):
         img_name = os.path.join(TRAIN_IMAGE_PATH, self.data.loc[idx, 'id_code'] + '.png')
         image = Image.open(img_name)
-        image = image.resize((448, 448), resample=Image.BILINEAR)
+        image = image.resize((img_size, img_size), resample=Image.BILINEAR)
 
         if self.transforms is not None:
             image = self.transforms(image)
@@ -89,6 +93,34 @@ class RotationTransform:
 #         return gem(x, p=self.p, eps=self.eps)       
 #     def __repr__(self):
 #         return self.__class__.__name__ + '(' + 'p=' + '{:.4f}'.format(self.p.data.tolist()[0]) + ', ' + 'eps=' + str(self.eps) + ')'
+
+def quadratic_kappa(actuals, preds, N=5):
+    w = np.zeros((N,N))
+    O = confusion_matrix(actuals, preds)
+    
+    for i in range(len(w)): 
+        for j in range(len(w)):
+            w[i][j] = float(((i-j)**2)/(N-1)**2)
+
+    act_hist=np.zeros([N])
+    for item in actuals:
+        act_hist[item]+=1
+    pred_hist=np.zeros([N])
+    for item in preds: 
+        pred_hist[item]+=1
+                
+    E = np.outer(act_hist, pred_hist);
+    E = E/E.sum();
+    O = O/O.sum();
+    
+    num=0
+    den=0
+    for i in range(len(w)):
+        for j in range(len(w)):
+            num+=w[i][j]*O[i][j]
+            den+=w[i][j]*E[i][j]
+    return (1 - (num/den))
+
 
 def split_data(dataset, file_name = 'split.json'):
     path = os.path.join(WORK_DIR, file_name)
@@ -142,7 +174,8 @@ if __name__=="__main__":
     train_transforms = torch.nn.Sequential(
         transforms.ColorJitter(brightness=0.1, contrast=0.2, saturation=0.2, hue=0.1),
         transforms.RandomApply(torch.nn.ModuleList([transforms.GaussianBlur(3, sigma=(0.1, 2.0))]), p=0.5),
-        transforms.RandomAffine(180, translate=(0.2, 0.2), scale=(0.8, 1.2), shear=0.2),
+        transforms.RandomCrop(img_size-padding, padding=padding),
+        transforms.RandomAffine(30, translate=(0.2, 0.2), scale=(0.8, 1.2), shear=0.2),
         transforms.RandomHorizontalFlip(p=0.5)
     )
     train_dataset = RetinopathyDatasetTrain(csv_file='./train.csv', transforms=train_transforms)
@@ -151,13 +184,13 @@ if __name__=="__main__":
     tr_sampler = SubsetRandomSampler(split_dict['train'])
     val_sampler = SubsetRandomSampler(split_dict['val'])
 
-    data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16, sampler=tr_sampler, num_workers=0)
-    val_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16, sampler=val_sampler, num_workers=0)
+    data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8, sampler=tr_sampler, num_workers=8)
+    val_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8, sampler=val_sampler, num_workers=8)
 
     ### Optimizer
     # optimizer = optim.Adam(model.parameters(), lr=0.0002)
-    optimizer = optim.SGD(model.parameters(), lr=2e-4, momentum=0.9, weight_decay=1e-6)
-    stepLR = optim.lr_scheduler.StepLR(optimizer, 2, gamma=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=1e-5, momentum=0.9, weight_decay=1e-10)
+    stepLR = optim.lr_scheduler.StepLR(optimizer, 3, gamma=0.8)
 
     ### Train
     since = time.time()
@@ -193,6 +226,8 @@ if __name__=="__main__":
 
         # save model every 15 epochs
         if epoch % 4 == 0:
+            labels_tmp = np.zeros([len(split_dict['val'])],dtype=int)
+            preds_tmp = np.zeros([len(split_dict['val'])],dtype=int)
             train_dataset.transforms = torch.nn.Sequential()
             torch.save(model.state_dict(), os.path.join(WORK_DIR,f"model_epoch{epoch+1}.pth"))
             torch.save(model.state_dict(), os.path.join(WORK_DIR,"latest.pth"))
@@ -207,13 +242,17 @@ if __name__=="__main__":
                 inputs = inputs.to(device, dtype=torch.float)
                 labels = labels.to(device, dtype=torch.float)
                 outputs = model(inputs)
-                correct += (torch.round(outputs) == labels).sum().item()
+                preds = torch.round(outputs)
+                correct += (preds == labels).sum().item()
                 loss = criterion(outputs, labels)
                 running_loss += loss.item() * inputs.size(0)
+                labels_tmp[counter:counter+inputs.shape[0]] = labels.view(-1).cpu().detach().numpy()
+                preds_tmp[counter:counter+inputs.shape[0]] = preds.view(-1).cpu().detach().numpy()
                 counter += inputs.shape[0]
                 tk0.set_postfix(loss=running_loss/counter)
+            kappa = quadratic_kappa(labels_tmp, preds_tmp)
             epoch_loss = running_loss / counter
-            show_str = 'Evaluation Loss: {:.4f}, Accuracy: {:.4f}%'.format(epoch_loss, 100.*correct/counter)
+            show_str = 'Evaluation Loss: {:.4f}, Accuracy: {:.4f}%, Kappa: {:.4f}'.format(epoch_loss, 100.*correct/counter, kappa)
             print(show_str)
             with open(os.path.join(WORK_DIR,"log.txt"),'a') as f:
                 f.write("epoch {}   {}\n".format(epoch+1,show_str))
