@@ -117,7 +117,7 @@ if __name__=="__main__":
     ### Train
     since = time.time()
     criterion = nn.SmoothL1Loss()
-    num_epochs = 15
+    num_epochs = 90
     for epoch in range(1, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
