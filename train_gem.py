@@ -41,12 +41,17 @@ class RetinopathyDatasetTrain(Dataset):
 
         if self.transforms is not None:
             image = self.transforms(image)
+            norm = transforms.Compose([transforms.ToTensor(), 
+                                       transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                                     ])
+
 
         label = torch.tensor(self.data.loc[idx, 'diagnosis'])
-        return {'image': transforms.ToTensor()(image),
+        return {'image': norm(image),
                 'labels': label
                 }
-
+        transforms.ToTensor(),
+        
 """
 contrast_range=0.2,
 brightness_range=20.,
@@ -103,7 +108,7 @@ if __name__=="__main__":
         transforms.ColorJitter(brightness=0.1, contrast=0.2, saturation=0.2, hue=0.1),
         transforms.RandomApply(torch.nn.ModuleList([transforms.GaussianBlur(3, sigma=(0.1, 2.0))]), p=0.5),
         transforms.RandomAffine(180, translate=(0.2, 0.2), scale=(0.8, 1.2), shear=0.2),
-        transforms.RandomHorizontalFlip(p=0.5)
+        transforms.RandomHorizontalFlip(p=0.5),
     )
     train_dataset = RetinopathyDatasetTrain(csv_file='./train.csv', transforms=train_transforms)
     data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16, shuffle=True, num_workers=4)
@@ -117,7 +122,7 @@ if __name__=="__main__":
     ### Train
     since = time.time()
     criterion = nn.SmoothL1Loss()
-    num_epochs = 90
+    num_epochs = 30
     for epoch in range(1, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
