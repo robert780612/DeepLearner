@@ -49,8 +49,8 @@ class RetinopathyDatasetTrain(Dataset):
         label = torch.tensor(self.data.loc[idx, 'diagnosis'])
         return {'image': norm(image),
                 'labels': label
-                }
-        transforms.ToTensor(),
+               }
+
         
 """
 contrast_range=0.2,
