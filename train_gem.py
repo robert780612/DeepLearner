@@ -17,7 +17,7 @@ from PIL import Image, ImageFile
 
 import pretrainedmodels
 import torchvision.transforms.functional as TF
-from models import get_se_resnet50_gem
+from models import get_se_resnet50_gem, get_se_resnet101_gem, get_densenet121_gem
 
 TRAIN_IMAGE_PATH = './train_images'
 
@@ -37,21 +37,17 @@ class RetinopathyDatasetTrain(Dataset):
     def __getitem__(self, idx):
         img_name = os.path.join(TRAIN_IMAGE_PATH, self.data.loc[idx, 'id_code'] + '.png')
         image = Image.open(img_name)
-        image = image.resize((256, 256), resample=Image.BILINEAR)
+        #image = image.resize((256, 256), resample=Image.BILINEAR)
+        image = image.resize((224, 224), resample=Image.BILINEAR)
 
         if self.transforms is not None:
             image = self.transforms(image)
-            norm = transforms.Compose([transforms.ToTensor(), 
-                                       transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-                                     ])
-
 
         label = torch.tensor(self.data.loc[idx, 'diagnosis'])
-        return {'image': norm(image),
+        return {'image': transforms.ToTensor()(image),
                 'labels': label
-               }
+                }
 
-        
 """
 contrast_range=0.2,
 brightness_range=20.,
@@ -99,7 +95,9 @@ if __name__=="__main__":
     # model.avg_pool = GeM()
     # model.last_linear = nn.Linear(2048, 1)
 
-    model = get_se_resnet50_gem(pretrain='imagenet')
+    #model = get_se_resnet50_gem(pretrain='imagenet')
+    #model = get_se_resnet101_gem(pretrain='imagenet')
+    model = get_densenet121_gem(pretrain='imagenet')
     model = model.to(device)
     print(model)
 
@@ -108,10 +106,11 @@ if __name__=="__main__":
         transforms.ColorJitter(brightness=0.1, contrast=0.2, saturation=0.2, hue=0.1),
         transforms.RandomApply(torch.nn.ModuleList([transforms.GaussianBlur(3, sigma=(0.1, 2.0))]), p=0.5),
         transforms.RandomAffine(180, translate=(0.2, 0.2), scale=(0.8, 1.2), shear=0.2),
-        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomHorizontalFlip(p=0.5)
     )
     train_dataset = RetinopathyDatasetTrain(csv_file='./train.csv', transforms=train_transforms)
-    data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16, shuffle=True, num_workers=4)
+    #data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16, shuffle=True, num_workers=4)
+    data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4)
 
 
     ### Optimizer
@@ -122,7 +121,7 @@ if __name__=="__main__":
     ### Train
     since = time.time()
     criterion = nn.SmoothL1Loss()
-    num_epochs = 30
+    num_epochs = 150
     for epoch in range(1, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
@@ -149,7 +148,7 @@ if __name__=="__main__":
 
         # save model every 15 epochs
         if epoch % 15 == 0:
-            torch.save(model.state_dict(), f"model{epoch}.pth")
+            torch.save(model.state_dict(), f"model_densenet121_bs64_{epoch}.pth")
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))

@@ -30,4 +30,21 @@ def get_se_resnet50_gem(pretrain):
     model.last_linear = nn.Linear(2048, 1)
     return model
 
+def get_se_resnet101_gem(pretrain):
+    if pretrain == 'imagenet':
+        model = pretrainedmodels.__dict__['se_resnet101'](num_classes=1000, pretrained='imagenet')
+    else:
+        model = pretrainedmodels.__dict__['se_resnet101'](num_classes=1000, pretrained=None)
+    model.avg_pool = GeM()
+    model.last_linear = nn.Linear(2048, 1)
+    return model
+
+def get_densenet121_gem(pretrain):
+    if pretrain == 'imagenet':
+        model = pretrainedmodels.__dict__['densenet121'](num_classes=1000, pretrained='imagenet')
+    else:
+        model = pretrainedmodels.__dict__['densenet121'](num_classes=1000, pretrained=None)
+    model.avg_pool = GeM()
+    model.last_linear = nn.Linear(1024, 1)
+    return model
 
