@@ -124,6 +124,7 @@ class RotationTransform:
 
 if __name__=="__main__":
     model = get_se_resnet50_gem(pretrain='imagenet')
+    model.load_state_dict(torch.load(pretrain, map_location='cuda:0'))
     model = model.to(device)
     if args.model_path:
         model.load_state_dict(torch.load(args.model_path))
