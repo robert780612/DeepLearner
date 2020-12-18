@@ -99,7 +99,10 @@ if __name__=="__main__":
     # model.avg_pool = GeM()
     # model.last_linear = nn.Linear(2048, 1)
 
+    pretrain = 'pretrain_model24.pth'
+
     model = get_se_resnet50_gem(pretrain='imagenet')
+    model.load_state_dict(torch.load(pretrain, map_location='cuda:0'))
     model = model.to(device)
     print(model)
 
