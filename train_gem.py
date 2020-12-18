@@ -1,6 +1,7 @@
 import os
 import time
 import random
+import argparse
 
 import pandas as pd
 import torch
@@ -19,11 +20,42 @@ import pretrainedmodels
 import torchvision.transforms.functional as TF
 from models import get_se_resnet50_gem
 
-TRAIN_IMAGE_PATH = './train_images'
-
-
-device = torch.device("cuda")
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+parser = argparse.ArgumentParser()
+parser.add_argument('train_image_path', help='training folder')
+parser.add_argument('train_csv_path', help='training label')
+parser.add_argument('device', help='cuda')
+parser.add_argument('--img_size', defualt=256, type=int)
+parser.add_argument('--pretrain', action='store_true')
+parser.add_argument('--model_path')
+args = parser.parse_args()
+train_image_path = args.train_image_path
+train_csv_path = args.train_csv_path
+device = args.device
+
+
+class RetinopathyDatasetTrain2015(Dataset):
+    def __init__(self, csv_file, transforms=None):
+        self.data = pd.read_csv(csv_file)
+        self.transforms = transforms
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        img_name = os.path.join(train_image_path, self.data.loc[idx, 'image'] + '.jpeg')
+        image = Image.open(img_name)
+        image = image.resize((args.img_size, args.img_size), resample=Image.BILINEAR)
+
+        if self.transforms is not None:
+            image = self.transforms(image)
+            norm = transforms.Compose([transforms.ToTensor(), 
+                                       transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                                     ])
+        label = torch.tensor(self.data.loc[idx, 'level'])
+        return {'image': norm(image),
+                'labels': label}
 
 
 class RetinopathyDatasetTrain(Dataset):
@@ -35,17 +67,15 @@ class RetinopathyDatasetTrain(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(TRAIN_IMAGE_PATH, self.data.loc[idx, 'id_code'] + '.png')
+        img_name = os.path.join(train_image_path, self.data.loc[idx, 'id_code'] + '.png')
         image = Image.open(img_name)
-        image = image.resize((256, 256), resample=Image.BILINEAR)
+        image = image.resize((args.img_size, args.img_size), resample=Image.BILINEAR)
 
         if self.transforms is not None:
             image = self.transforms(image)
             norm = transforms.Compose([transforms.ToTensor(), 
                                        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                                      ])
-
-
         label = torch.tensor(self.data.loc[idx, 'diagnosis'])
         return {'image': norm(image),
                 'labels': label
@@ -93,14 +123,10 @@ class RotationTransform:
 
 
 if __name__=="__main__":
-
-    ### Model
-    # model = pretrainedmodels.__dict__['se_resnet50'](num_classes=1000, pretrained='imagenet')
-    # model.avg_pool = GeM()
-    # model.last_linear = nn.Linear(2048, 1)
-
     model = get_se_resnet50_gem(pretrain='imagenet')
     model = model.to(device)
+    if args.model_path:
+        model.load_state_dict(torch.load(args.model_path))
     print(model)
 
     ### Dataset
@@ -110,14 +136,15 @@ if __name__=="__main__":
         transforms.RandomAffine(180, translate=(0.2, 0.2), scale=(0.8, 1.2), shear=0.2),
         transforms.RandomHorizontalFlip(p=0.5),
     )
-    train_dataset = RetinopathyDatasetTrain(csv_file='./train.csv', transforms=train_transforms)
+    if args.pretrain == True:
+        train_dataset = RetinopathyDatasetTrain2015(csv_file=train_csv_path, transforms=train_transforms)
+    else:
+        train_dataset = RetinopathyDatasetTrain(csv_file=train_csv_path, transforms=train_transforms)
     data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16, shuffle=True, num_workers=4)
-
 
     ### Optimizer
     optimizer = optim.Adam(model.parameters(), lr=0.0002)
     # optimizer = optim.SGD(lr=1e-3, momentum=0.9, nesterov=True)
-
 
     ### Train
     since = time.time()
@@ -128,9 +155,9 @@ if __name__=="__main__":
         print('-' * 10)
         model.train()
         running_loss = 0.0
-        tk0 = tqdm(data_loader, total=int(len(data_loader)))
+        #tk0 = tqdm(data_loader, total=int(len(data_loader)))
         counter = 0
-        for bi, d in enumerate(tk0):
+        for bi, d in enumerate(data_loader):
             inputs = d["image"]
             labels = d["labels"].view(-1, 1)
             inputs = inputs.to(device, dtype=torch.float)
@@ -141,15 +168,19 @@ if __name__=="__main__":
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
-            running_loss += loss.item() * inputs.size(0)
+            running_loss += loss.item()
             counter += 1
-            tk0.set_postfix(loss=(running_loss / (counter * data_loader.batch_size)))
-        epoch_loss = running_loss / len(data_loader.dataset)
-        print('Training Loss: {:.4f}'.format(epoch_loss))
+            #tk0.set_postfix(loss=(running_loss / (counter * data_loader.batch_size)))
+            #epoch_loss = running_loss / len(data_loader.dataset)
+            if bi % 20 == 0:
+                print('Training Loss: {}, {}, {:.4f}'.format(epoch, bi, running_loss / counter), flush=True)
 
         # save model every 15 epochs
-        if epoch % 15 == 0:
-            torch.save(model.state_dict(), f"model{epoch}.pth")
+        if args.pretrain:
+            torch.save(model.state_dict(), f"pretrain_model{epoch}.pth")
+        else:
+            if epoch % 15 == 0:
+                torch.save(model.state_dict(), f"model{epoch}.pth")
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
