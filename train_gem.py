@@ -18,7 +18,7 @@ from PIL import Image, ImageFile
 
 import pretrainedmodels
 import torchvision.transforms.functional as TF
-from models import get_se_resnet50_gem
+from models import get_se_resnet50_gem, get_densenet121_gem
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -26,9 +26,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument('train_image_path', help='training folder')
 parser.add_argument('train_csv_path', help='training label')
 parser.add_argument('device', help='cuda')
-parser.add_argument('--img_size', defualt=256, type=int)
+parser.add_argument('--img_size', default=256, type=int)
 parser.add_argument('--pretrain', action='store_true')
+parser.add_argument('--unnorm', action='store_true', help='unnormalize the image')
 parser.add_argument('--model_path')
+parser.add_argument('--weight_decay', default=0.0, type=float)
+parser.add_argument('--additional_image_path', default=None, help='the additional dataset with pseudo label')
+parser.add_argument('--additional_csv_path', default=None, help='the additional dataset with pseudo label')
+parser.add_argument('--model_arch', default='seresnet50', choices=['seresnet50', 'densenet121'])
 args = parser.parse_args()
 train_image_path = args.train_image_path
 train_csv_path = args.train_csv_path
@@ -50,24 +55,28 @@ class RetinopathyDatasetTrain2015(Dataset):
 
         if self.transforms is not None:
             image = self.transforms(image)
-            norm = transforms.Compose([transforms.ToTensor(), 
-                                       transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-                                     ])
+            if args.unnorm:
+                norm = transforms.Compose([transforms.ToTensor()])
+            else:
+                norm = transforms.Compose([transforms.ToTensor(), 
+                                           transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                                          ])
         label = torch.tensor(self.data.loc[idx, 'level'])
         return {'image': norm(image),
                 'labels': label}
 
 
 class RetinopathyDatasetTrain(Dataset):
-    def __init__(self, csv_file, transforms=None):
+    def __init__(self, csv_file, transforms=None, image_path=train_image_path):
         self.data = pd.read_csv(csv_file)
         self.transforms = transforms
+        self.train_image_path = image_path
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(train_image_path, self.data.loc[idx, 'id_code'] + '.png')
+        img_name = os.path.join(self.train_image_path, self.data.loc[idx, 'id_code'] + '.png')
         image = Image.open(img_name)
         image = image.resize((args.img_size, args.img_size), resample=Image.BILINEAR)
 
@@ -78,7 +87,7 @@ class RetinopathyDatasetTrain(Dataset):
                                      ])
         label = torch.tensor(self.data.loc[idx, 'diagnosis'])
         return {'image': norm(image),
-                'labels': label
+                'labels': label.to(float)
                }
 
         
@@ -123,8 +132,10 @@ class RotationTransform:
 
 
 if __name__=="__main__":
-    model = get_se_resnet50_gem(pretrain='imagenet')
-    model.load_state_dict(torch.load(pretrain, map_location='cuda:0'))
+    if args.model_arch == 'seresnet50':
+        model = get_se_resnet50_gem(pretrain='imagenet')
+    elif args.model_arch == 'densenet121':
+        model = get_densenet121_gem(pretrain='imagenet')
     model = model.to(device)
     if args.model_path:
         model.load_state_dict(torch.load(args.model_path))
@@ -141,10 +152,13 @@ if __name__=="__main__":
         train_dataset = RetinopathyDatasetTrain2015(csv_file=train_csv_path, transforms=train_transforms)
     else:
         train_dataset = RetinopathyDatasetTrain(csv_file=train_csv_path, transforms=train_transforms)
+    if args.additional_csv_path is not None:
+        additional_dataset = RetinopathyDatasetTrain(csv_file=args.additional_csv_path, transforms=train_transforms, image_path=args.additional_image_path)
+        train_dataset = torch.utils.data.ConcatDataset([train_dataset, additional_dataset])
     data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16, shuffle=True, num_workers=4)
 
     ### Optimizer
-    optimizer = optim.Adam(model.parameters(), lr=0.0002)
+    optimizer = optim.Adam(model.parameters(), lr=0.0002, weight_decay=args.weight_decay)
     # optimizer = optim.SGD(lr=1e-3, momentum=0.9, nesterov=True)
 
     ### Train
@@ -180,7 +194,7 @@ if __name__=="__main__":
         if args.pretrain:
             torch.save(model.state_dict(), f"pretrain_model{epoch}.pth")
         else:
-            if epoch % 15 == 0:
+            if epoch % 5 == 0:
                 torch.save(model.state_dict(), f"model{epoch}.pth")
 
     time_elapsed = time.time() - since
