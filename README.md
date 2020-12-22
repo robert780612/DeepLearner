@@ -107,10 +107,10 @@ SE_restnet50 | 1x NVIDIA GTX 1080 | 256, 256 | 30 | 2 hours |
 
 ## Inference
 
-### Inference single images
+### Inference and Make submission.csv
 you need open mmtosummit.py to change model path and output name
 ```
-$ python3 mmtosummit.py
+$ python3 test.py
 ```
 ## result
 ![](https://github.com/linzino7/Fast_RCNN_mmdet/blob/main/imgresult/in_2009_003123.jpg)
