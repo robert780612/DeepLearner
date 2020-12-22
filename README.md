@@ -123,6 +123,11 @@ $ python3 test.py
 ### seresnet50 512  pseudo label  (BEST SCORE)
 ![](https://github.com/robert780612/DeepLearner/blob/main/result/pseudolabel.png?raw=true)
 
+1. Train two SE-Resnet50 model which input size are 512 and 256 by 2015 and 2019 training data.
+2. Used input size 256 of SE-Resnet50 to inference testing data and make pseudo-label.
+3. Train input size 512 of SE-Resnet50 by 2019 training data and 2019 pseudo-label testing data.
+3. Used input size 512 of SE-Resnet50 to make submission.csv.
+
 # Reference:
 - [Gold Medal Solutions](https://www.kaggle.com/c/aptos2019-blindness-detection/discussion/108307)
 - [Rank 12 4uiiurz1](https://github.com/4uiiurz1/kaggle-aptos2019-blindness-detection)
