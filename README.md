@@ -55,11 +55,12 @@ After downloading images and spliting json file, the data directory is structure
 
 ```
 # APTOS 2019 Blindness Detection images
-train_images/
-test_images/
-train.csv
-test.csv
-sample_submission.csv
+DeepLearner
+ | +-train_images/
+ | +-test_images/
+ | --train.csv
+ | --test.csv
+ | --sample_submission.csv
 ```
 
 ## Training
