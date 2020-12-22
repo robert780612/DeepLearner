@@ -116,7 +116,11 @@ $ python3 test.py
 ### densenet121_bs64_90
 ![](https://github.com/robert780612/DeepLearner/blob/main/result/model_densenet121_bs64_90.PNG?raw=true)
 
-### ensemble by densenet121, seresnet50, seresnet50 and pseudo label
+### ensemble dense+seres+seres512 
+
+![](https://github.com/robert780612/DeepLearner/blob/main/result/ensemble%20dense.seres.seres512_0.920265.png?raw=true)
+
+### seresnet50 512  pseudo label  (BEST SCORE)
 ![](https://github.com/robert780612/DeepLearner/blob/main/result/pseudolabel.png?raw=true)
 
 # Reference:
