@@ -1,5 +1,6 @@
 # APTOS 2019 Blindness Detection
-> Team name : DeepLearner 
+> Team name : DeepLearner <br>
+> Member : Robert, Lin, Zino
 
 This Rep. is "Selected Topics in Visual Recognition using Deep Learning" final project in 2020.
 
