@@ -113,8 +113,11 @@ you need open mmtosummit.py to change model path and output name
 $ python3 test.py
 ```
 ## result
-![](https://github.com/linzino7/Fast_RCNN_mmdet/blob/main/imgresult/in_2009_003123.jpg)
-![](https://github.com/linzino7/Fast_RCNN_mmdet/blob/main/imgresult/in_2009_003938.jpg)
+### densenet121_bs64_90
+![](https://github.com/robert780612/DeepLearner/blob/main/result/model_densenet121_bs64_90.PNG?raw=true)
+
+### pseudo label
+![](https://github.com/robert780612/DeepLearner/blob/main/result/pseudolabel.png?raw=true)
 
 # mmdetection Modify
 
