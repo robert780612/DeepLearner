@@ -101,7 +101,7 @@ The expected training times are:
 
 Model | GPUs | Image size | Training Epochs | Training Time | 
 ------------ | ------------- | ------------- | ------------- | ------------- |
-SE_restnet50 | 1x NVIDIA GTX 1080 | 256, 256 | 30 | 1 hours |
+SE_restnet50 | 1x NVIDIA GTX 1080 | 256, 256 | 30 | 2 hours |
 
 
 
