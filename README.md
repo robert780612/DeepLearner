@@ -1,7 +1,7 @@
 # APTOS 2019 Blindness Detection
 > Team name : DeepLearner 
 
-This Rep. is "Selected Topics in Visual Recognition using Deep Learning" final project.
+This Rep. is "Selected Topics in Visual Recognition using Deep Learning" final project in 2020.
 
 ## Hardware
 - Ubuntu 18.04 LTS
