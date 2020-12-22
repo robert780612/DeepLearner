@@ -108,10 +108,10 @@ SE_restnet50 | 1x NVIDIA GTX 1080 | 256, 256 | 30 | 2 hours |
 ## Inference
 
 ### Inference and Make submission.csv
-you need open mmtosummit.py to change model path and output name
 ```
 $ python3 test.py
 ```
+
 ## result
 ### densenet121_bs64_90
 ![](https://github.com/robert780612/DeepLearner/blob/main/result/model_densenet121_bs64_90.PNG?raw=true)
