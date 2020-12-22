@@ -18,22 +18,11 @@ This Rep. is "Selected Topics in Visual Recognition using Deep Learning" final p
 
 ## Install env
 ```
-# getting start mmdectation
-# https://github.com/open-mmlab/mmdetection/blob/master/docs/get_started.md
-
-# Pytorch 1.6.0  CUDA 10.2
+# Pytorch 1.7.0  CUDA 11.2
 pip3 install torch==1.7.0+cu110 torchvision==0.8.1+cu110 torchaudio===0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
 
-# Install mmcv-full, we recommend you to install the pre-build package as below.
-pip3 install mmcv-full==latest+torch1.7.0+cu110 -f https://download.openmmlab.com/mmcv/dist/index.html
-
-# Clone the MMDetection repository.
-git clone https://github.com/open-mmlab/mmdetection.git
-cd mmdetection
-
-# Install build requirements and then install MMDetection.
-pip3 install -r requirements/build.txt
-pip3 install -v -e .  # or "python setup.py develop"
+#  install requirements
+pip3 install -r requirements.txt
 ```
 
 ## Reproducing Submission
