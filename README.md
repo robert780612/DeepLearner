@@ -116,10 +116,10 @@ $ python3 test.py
 ### densenet121_bs64_90
 ![](https://github.com/robert780612/DeepLearner/blob/main/result/model_densenet121_bs64_90.PNG?raw=true)
 
-### pseudo label
+### ensemble by densenet121, seresnet50, seresnet50 and pseudo label
 ![](https://github.com/robert780612/DeepLearner/blob/main/result/pseudolabel.png?raw=true)
 
-# mmdetection Modify
-
 # Reference:
-
+- [Gold Medal Solutions](https://www.kaggle.com/c/aptos2019-blindness-detection/discussion/108307)
+- [Rank 12 4uiiurz1](https://github.com/4uiiurz1/kaggle-aptos2019-blindness-detection)
+- [pretrained-models](https://github.com/Cadene/pretrained-models.pytorch)
