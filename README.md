@@ -112,7 +112,7 @@ SE_restnet50 | 1x NVIDIA GTX 1080 | 256, 256 | 30 | 2 hours |
 $ python3 test.py
 ```
 
-## result
+## Result
 ### densenet121_bs64_90
 ![](https://github.com/robert780612/DeepLearner/blob/main/result/model_densenet121_bs64_90.PNG?raw=true)
 
@@ -123,7 +123,7 @@ $ python3 test.py
 ### seresnet50 512  pseudo label  (BEST SCORE)
 ![](https://github.com/robert780612/DeepLearner/blob/main/result/pseudolabel.png?raw=true)
 
-#### workflow
+#### pseudo workflow 
 ![traing workflow](https://github.com/robert780612/DeepLearner/blob/main/result/traing.png?raw=true)
 
 1. Train two SE-Resnet50 model which input size are 512 and 256 by 2015 and 2019 training data.
