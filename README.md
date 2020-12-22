@@ -1,5 +1,6 @@
 # APTOS 2019 Blindness Detection
-# DeepLearner 
+> Team name : DeepLearner 
+
 This Rep. is "Selected Topics in Visual Recognition using Deep Learning" final project.
 
 ## Hardware
