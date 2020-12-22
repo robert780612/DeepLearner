@@ -35,17 +35,21 @@ To reproduct my submission without retrainig, do the following steps:
 3.  [Inference](#Inference)
 
 ## Dataset Preparation
-#### Download Classes Image
-Dataset: https://drive.google.com/drive/folders/1nglaZBJJ_Amonndw4nIVBh_UuCpp4gee?usp=sharing
+### Download Classes Image
+#### aptos2019-blindness-detection
+Data Link：
+* [2015 Diabetic Retinopathy Detection](https://www.kaggle.com/c/diabetic-retinopathy-detection/data)
+* [APTOS 2019 Blindness Detection images](https://www.kaggle.com/c/aptos2019-blindness-detection/data)
 
-Download and extract *train_images.zip* and *test_images.zip* to *data* directory.
+Download image file to your disk.
+Extract *aptos2019-blindness-detection.zip* and *diabetic-retinopathy-detection.zip* to *DeepLearner* and *Pretrained* directory.
 
 
-### Prepare Images
+#### Prepare Images
 After downloading images and spliting json file, the data directory is structured as:
 
 ```
-# 2015 images
+# 2015 Diabetic Retinopathy Detection images
  Pretrained/
   | +- sample/
   | +- train/
@@ -64,33 +68,6 @@ DeepLearner
 ```
 
 ## Training
-Train a model with image size 512, and train another model with image size 256.
-Use the model 256 to make pseudo label on 2019 test dataset.
-Finally, fine-tune model 512 on 2019 training + 2019 testing with pseudo label.
-
-Pretrain on 2015 dataset
-```
-python3 train_gem.py ~/Pretrained/train/  ~/Pretrained/trainLabels.csv cuda:1 --img_size 512 --pretrain
-```
-
-Fine-tune on 2019 dataset
-```
-python3 train_gem.py ~/DeepLearner/train_images/  ~/DeepLearner/train.csv cuda:1 --img_size 512 --model_path pretrain_weight_512/pretrain_model30.pth
-```
-
-Third stage Fine-tune on 2019 train + test with pseudo label
-```
-python3 train_gem.py ~/DeepLearner/train_images/  ~/DeepLearner/train.csv cuda:1 --img_size 512 --model_path pretrain_weight_512/pretrain_model30.pth --additional_csv_path ./soft_pseudo_label.csv --additional_image_path ~/DeepLearner/test_images/
-```
-
-Make pseudo label
-```
-python3 train_gem.py ~/Pretrained/train/  ~/Pretrained/trainLabels.csv cuda:1 --img_size 256 --pretrain
-python3 train_gem.py ~/DeepLearner/train_images/  ~/DeepLearner/train.csv cuda:1 --img_size 256 --model_path pretrain_weight_256/pretrain_model30.pth
-python make_pseudo_label.py
-```
-
-
 ### Setting
 You can setting detail Hyperparameters in [configs/mask_rcnn/mask_rcnn_r50_zino.py](https://github.com/linzino7/Fast_RCNN_mmdet/configs/mask_rcnn/mask_rcnn_r50_zino.py)
 
@@ -123,9 +100,32 @@ Model | GPUs | Image size | Training Epochs | Training Time | mAP|
 ------------ | ------------- | ------------- | ------------- | ------------- | ------------- | 
 Fast_RCNN | 1x NVIDIA GTX 1080 | 1333, 800 | 100 | 6 hours | 0.
 
+Train a model with image size 512, and train another model with image size 256.
+Use the model 256 to make pseudo label on 2019 test dataset.
+Finally, fine-tune model 512 on 2019 training + 2019 testing with pseudo label.
 
-### Muti-GPU Training
-I didn't test muti-GPU training.
+Pretrain on 2015 dataset
+```
+python3 train_gem.py ~/Pretrained/train/  ~/Pretrained/trainLabels.csv cuda:1 --img_size 512 --pretrain
+```
+
+Fine-tune on 2019 dataset
+```
+python3 train_gem.py ~/DeepLearner/train_images/  ~/DeepLearner/train.csv cuda:1 --img_size 512 --model_path pretrain_weight_512/pretrain_model30.pth
+```
+
+Third stage Fine-tune on 2019 train + test with pseudo label
+```
+python3 train_gem.py ~/DeepLearner/train_images/  ~/DeepLearner/train.csv cuda:1 --img_size 512 --model_path pretrain_weight_512/pretrain_model30.pth --additional_csv_path ./soft_pseudo_label.csv --additional_image_path ~/DeepLearner/test_images/
+```
+
+Make pseudo label
+```
+python3 train_gem.py ~/Pretrained/train/  ~/Pretrained/trainLabels.csv cuda:1 --img_size 256 --pretrain
+python3 train_gem.py ~/DeepLearner/train_images/  ~/DeepLearner/train.csv cuda:1 --img_size 256 --model_path pretrain_weight_256/pretrain_model30.pth
+python make_pseudo_label.py
+```
+
 
 ## Inference
 
