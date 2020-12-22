@@ -34,26 +34,31 @@ To reproduct my submission without retrainig, do the following steps:
 3.  [Inference](#Inference)
 
 ## Dataset Preparation
-### Prepare Images
-After downloading images and spliting json file, the data directory is structured as:
-```
- data/
-  | +- train_images/
-  | +- test_images/
-  | -- pascal_train10.json
-  | -- pascal_train90.json
-  | -- test.json
-```
-
 #### Download Classes Image
 Dataset: https://drive.google.com/drive/folders/1nglaZBJJ_Amonndw4nIVBh_UuCpp4gee?usp=sharing
 
 Download and extract *train_images.zip* and *test_images.zip* to *data* directory.
 
-#### Splited training and validation json used coco style
-Use split8020.py to make train.txt .
+
+### Prepare Images
+After downloading images and spliting json file, the data directory is structured as:
+
 ```
-$ python3 split8020.py
+# 2015 images
+ Pretrained/
+  | +- sample/
+  | +- train/
+  | -- trainLabels.csv
+  | -- sampleSubmission.csv
+```
+
+```
+# APTOS 2019 Blindness Detection images
+train_images/
+test_images/
+train.csv
+test.csv
+sample_submission.csv
 ```
 
 ## Training
