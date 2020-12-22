@@ -1,3 +1,9 @@
 pretrainedmodels
 pytz
 tqdm
+sklearn
+joblib
+matplotlib
+opencv-python
+scikit-image
+efficientnet-pytorch
