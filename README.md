@@ -35,8 +35,7 @@ To reproduct my submission without retrainig, do the following steps:
 3.  [Inference](#Inference)
 
 ## Dataset Preparation
-### Download Classes Image
-#### aptos2019-blindness-detection
+### Download Kaggle Image
 Data Link：
 * [2015 Diabetic Retinopathy Detection](https://www.kaggle.com/c/diabetic-retinopathy-detection/data)
 * [APTOS 2019 Blindness Detection images](https://www.kaggle.com/c/aptos2019-blindness-detection/data)
@@ -68,37 +67,8 @@ DeepLearner
 ```
 
 ## Training
-### Setting
-You can setting detail Hyperparameters in [configs/mask_rcnn/mask_rcnn_r50_zino.py](https://github.com/linzino7/Fast_RCNN_mmdet/configs/mask_rcnn/mask_rcnn_r50_zino.py)
-
-```
-total_epochs = 100
-checkpoint_config = dict(interval=1)
-log_config = dict(interval=50, hooks=[dict(type='TextLoggerHook')])
-dist_params = dict(backend='nccl')
-log_level = 'INFO'
-load_from = None
-resume_from = None
-workflow = [('train', 1)]
-classes = ('aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
-           'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
-           'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor')
-work_dir = './work_dirs/mask_rcnn_r50_caffe_fpn_mstrain-poly_1x_coco_posk_pretrain_200'
-gpu_ids = range(1, 1)
-```
-
 ### Train models
-To train models, run following commands.
-```
-$ python3 mmdetection/tools/train.py configs/mask_rcnn/mask_rcnn_r50_zino.py
-```
 This project used Pre-train model. But according the mmdetection doc, it used pre-train backbone restnet-50 on ImageNet.
-
-The expected training times are:
-
-Model | GPUs | Image size | Training Epochs | Training Time | mAP|
------------- | ------------- | ------------- | ------------- | ------------- | ------------- | 
-Fast_RCNN | 1x NVIDIA GTX 1080 | 1333, 800 | 100 | 6 hours | 0.
 
 Train a model with image size 512, and train another model with image size 256.
 Use the model 256 to make pseudo label on 2019 test dataset.
@@ -125,6 +95,14 @@ python3 train_gem.py ~/Pretrained/train/  ~/Pretrained/trainLabels.csv cuda:1 --
 python3 train_gem.py ~/DeepLearner/train_images/  ~/DeepLearner/train.csv cuda:1 --img_size 256 --model_path pretrain_weight_256/pretrain_model30.pth
 python make_pseudo_label.py
 ```
+
+
+The expected training times are:
+
+Model | GPUs | Image size | Training Epochs | Training Time | 
+------------ | ------------- | ------------- | ------------- | ------------- |
+SE_restnet50 | 1x NVIDIA GTX 1080 | 256, 256 | 30 | 1 hours |
+
 
 
 ## Inference
