@@ -135,5 +135,5 @@ $ python3 test.py
 # Reference:
 - [Gold Medal Solutions](https://www.kaggle.com/c/aptos2019-blindness-detection/discussion/108307) : Top 12 Ranking solutions. 
 - [Rank 12 4uiiurz1](https://github.com/4uiiurz1/kaggle-aptos2019-blindness-detection) 
-- [pretrained-models](https://github.com/Cadene/pretrained-models.pytorch) : SE-Restnet 50  pretrained-models.
+- [pretrained-models](https://github.com/Cadene/pretrained-models.pytorch) : SE-Resnet 50  pretrained-models.
 - [Self-training with Noisy Student improves ImageNet classification](https://arxiv.org/abs/1911.04252) : CVPR 2020 pseudo-label.
